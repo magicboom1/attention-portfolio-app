@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Attention Portfolio</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+<style>
+:root {
+  --bg: #f4f4f6; --card: #ffffff; --text: #1a1a1e; --muted: #75757e;
+  --border: #e7e7ec; --brand: #4b3fe3; --brand-soft: #eeedfb;
+  --green: #16a34a; --green-bg: #e5f7ec;
+  --blue: #2563eb; --blue-bg: #e8f0fe;
+  --amber: #b45309; --amber-bg: #fdf3df;
+  --red: #dc2626; --red-bg: #fdebe9;
+  --gray: #8a8a92; --gray-bg: #efeff2;
+  --radius: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+  background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.55;
+  padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+}
+button { font-family: inherit; cursor: pointer; }
+#app { max-width: 620px; margin: 0 auto; padding: 18px 16px 24px; }
+.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+.eyebrow.lg { margin: 24px 0 8px; }
+.state-big { font-size: 34px; font-weight: 800; letter-spacing: -.01em; line-height: 1.12; margin-top: 6px; }
+.state-big.sm { font-size: 26px; margin-top: 10px; }
+.tagline { color: var(--muted); margin-top: 2px; font-size: 14px; }
+.tagline-zh { margin-top: 2px; font-weight: 600; }
+.muted { color: var(--muted); font-size: 13.5px; }
+.cap-block { margin-top: 16px; cursor: pointer; }
+.cap-bar { height: 10px; background: #e9e9ee; border-radius: 999px; overflow: hidden; }
+.cap-fill { height: 100%; border-radius: 999px; transition: width .35s ease; }
+.cap-text { margin-top: 7px; font-size: 13.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cap-text b { color: var(--text); font-size: 15px; }
+.cap-edit { color: var(--brand); font-weight: 600; }
+.cap-over { color: var(--red); font-weight: 700; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.chip { padding: 4px 11px; border-radius: 999px; background: #ececf1; font-size: 12.5px; font-weight: 600; color: #4b4b55; }
+.chip-hot { background: var(--red-bg); color: var(--red); }
+.chip-warm { background: var(--amber-bg); color: var(--amber); }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-top: 12px; }
+.card.list { padding: 4px 8px; }
+.press-card { border-left: 3px solid var(--text); }
+.press-name { font-size: 17px; font-weight: 700; margin-top: 2px; }
+.press-zh { font-size: 13px; color: var(--muted); font-weight: 600; margin-left: 8px; }
+.why-line { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+.btn-primary { display: block; width: 100%; padding: 13px; margin-top: 14px; border: none; border-radius: 12px; background: var(--text); color: #fff; font-size: 15px; font-weight: 600; }
+.btn-primary:active { transform: scale(.985); }
+.btn-ghost { padding: 7px 14px; border: 1px solid var(--border); background: var(--card); border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--text); }
+.btn-mini { padding: 5px 10px; border: 1px solid var(--border); background: #fff; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--text); }
+.btn-mini.danger { color: var(--red); border-color: #f3c8c4; }
+.prow { display: flex; align-items: center; gap: 12px; padding: 11px 8px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.prow:last-child { border-bottom: none; }
+.prow.plain { cursor: default; }
+.prow-l { flex: 1; min-width: 0; }
+.pname { font-weight: 600; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pdesc { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+.pbar { height: 4px; background: #ececf1; border-radius: 999px; margin-top: 6px; max-width: 220px; }
+.pbar i { display: block; height: 100%; background: var(--brand); border-radius: 999px; opacity: .55; }
+.prow-r { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.pnum { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 34px; text-align: right; }
+.badge { padding: 2.5px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800; letter-spacing: .05em; white-space: nowrap; }
+.b-DORMANT { color: var(--gray); background: var(--gray-bg); }
+.b-ACTIVE { color: var(--green); background: var(--green-bg); }
+.b-HEAVY { color: var(--amber); background: var(--amber-bg); }
+.b-BURNING { color: var(--red); background: var(--red-bg); }
+.diag-note { margin-top: 10px; font-size: 12px; color: var(--muted); text-align: center; }
+.statgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+.stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 4px; text-align: center; }
+.stat b { display: block; font-size: 16px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 10.5px; color: var(--muted); display: block; margin-top: 1px; }
+.flags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.flag { padding: 4px 10px; border-radius: 999px; background: var(--gray-bg); color: #4b4b55; font-size: 12px; font-weight: 600; }
+.flag-hot { background: var(--red-bg); color: var(--red); }
+.why-text { margin-top: 6px; font-size: 13.5px; line-height: 1.6; }
+.trow { display: flex; align-items: flex-start; gap: 10px; padding: 11px 8px; border-bottom: 1px solid var(--border); }
+.trow:last-child { border-bottom: none; }
+.trow.done .tname { text-decoration: line-through; color: var(--muted); }
+.check { width: 22px; height: 22px; border-radius: 999px; border: 1.5px solid #c9c9d1; background: #fff; flex-shrink: 0; margin-top: 2px; font-size: 13px; color: #fff; line-height: 1; }
+.check.on { background: var(--green); border-color: var(--green); }
+.tmain { flex: 1; min-width: 0; cursor: pointer; }
+.tname { font-weight: 600; font-size: 14.5px; }
+.tmeta { display: flex; flex-wrap: wrap; gap: 5px 10px; margin-top: 4px; font-size: 12px; color: var(--muted); align-items: center; }
+.tnum { font-variant-numeric: tabular-nums; }
+.tag { padding: 1.5px 7px; border-radius: 6px; background: var(--gray-bg); color: #55555e; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.tag-warm { background: var(--amber-bg); color: var(--amber); }
+.tag-hot { background: var(--red-bg); color: var(--red); }
+.tdel { border: none; background: none; color: #c2c2ca; font-size: 19px; padding: 0 4px; }
+.empty { padding: 22px 12px; text-align: center; color: var(--muted); font-size: 13.5px; }
+.view-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.head-actions { display: flex; gap: 6px; }
+.page-title { font-size: 24px; margin-top: 2px; }
+.arch-banner { margin-top: 10px; padding: 8px 12px; border-radius: 10px; background: var(--gray-bg); color: #55555e; font-size: 13px; font-weight: 600; }
+.week-banner { margin-bottom: 14px; padding: 12px 14px; border-radius: 12px; background: var(--brand-soft); border: 1px solid #dcd9f7; }
+.week-banner b { color: var(--brand); }
+.week-banner .muted { margin-top: 2px; }
+.week-banner button { margin-top: 8px; }
+.week-banner.subtle { background: var(--gray-bg); border-color: var(--border); }
+.hint { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.hero { padding-top: 6vh; }
+.hero h1 { font-size: 30px; line-height: 1.25; margin-top: 8px; letter-spacing: -.01em; }
+.hero p { margin-top: 12px; }
+.hero-steps { margin-top: 20px; display: grid; gap: 10px; }
+.hstep { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; }
+.hstep b { width: 22px; height: 22px; border-radius: 999px; background: var(--text); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.hstep .btn-mini { margin-left: auto; flex-shrink: 0; }
+.sm { font-size: 12.5px; }
+#tabbar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; display: flex; justify-content: space-around; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom, 0px); }
+#tabbar button { flex: 1; background: none; border: none; padding: 8px 0 7px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10.5px; color: var(--muted); font-weight: 600; }
+#tabbar button.active { color: var(--text); }
+#tabbar svg { width: 21px; height: 21px; }
+#modal-root .backdrop { position: fixed; inset: 0; background: rgba(20,20,24,.45); z-index: 50; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 51; max-width: 620px; margin: 0 auto; background: #fff; border-radius: 20px 20px 0 0; padding: 18px 18px calc(20px + env(safe-area-inset-bottom, 0px)); max-height: 88vh; overflow-y: auto; animation: sheet-up .24s cubic-bezier(.2,.8,.25,1); }
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } }
+.m-title { font-size: 18px; margin-bottom: 2px; }
+label.f { display: block; margin-top: 12px; font-size: 12.5px; font-weight: 700; color: #55555e; }
+input, select, textarea { width: 100%; margin-top: 6px; padding: 11px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; background: #fff; color: var(--text); font-family: inherit; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--brand); outline-offset: -1px; border-color: transparent; }
+textarea { resize: vertical; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.seg button { padding: 10px 6px; border-radius: 10px; border: 1px solid var(--border); background: #fff; font-size: 13px; font-weight: 600; color: #55555e; }
+.seg button.on { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+.checkrow { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--text); }
+.checkrow input { width: auto; margin: 0; }
+.btn-row { display: flex; gap: 8px; margin-top: 10px; }
+.card-title { font-weight: 700; font-size: 14.5px; }
+.card p { margin-top: 4px; }
+.danger-zone { border-color: #f3c8c4; }
+.about { margin-top: 18px; font-size: 12px; color: var(--muted); line-height: 1.7; text-align: center; }
+#toast { position: fixed; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%) translateY(6px); background: #232329; color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 13px; z-index: 60; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; max-width: 86vw; text-align: center; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (min-width: 700px) { body { background: #ececef; } #app { padding-top: 32px; } }
+</style>
+</head>
+<body>
+<div id="app"><main id="view"></main></div>
+<nav id="tabbar"></nav>
+<div id="modal-root"></div>
+<div id="toast"></div>
+<script>
+"use strict";
+
+// ===== ENGINE START =====
+// 纯计算层：不依赖 DOM，可被 tests.mjs 提取做回归测试。
+// 口径以《Attention Portfolio 0.1 Development Baseline》为准：
+// Weekly Load 用 Wt（Planned Effort This Week）；任务总规模用 Ht（Remaining Effort）；0 ≤ Wt ≤ Ht。
+
+const CONSEQUENCE_LEVELS = [
+  { value: 0, key: "flexible", label: "可延期", desc: "基本没影响，可以以后做" },
+  { value: 0.33, key: "slows", label: "拖慢进度", desc: "会拖慢项目" },
+  { value: 0.67, key: "affects", label: "影响他人", desc: "会影响下一步或其他人" },
+  { value: 1, key: "hard", label: "硬性截止", desc: "硬性承诺，必须按时完成" },
+];
+
+function parseDateStr(s) {
+  const parts = String(s).split("-").map(Number);
+  return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
+// daysLeft：日历日差（今天为 0）；hoursLeft：到截止日当天 23:59:59 的小时数
+function deadlineInfo(task, now = new Date()) {
+  if (!task.deadline) return { has: false, daysLeft: null, hoursLeft: null, isOverdue: false, within72h: false };
+  const dl = parseDateStr(task.deadline);
+  const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const daysLeft = Math.round((dl - todayMid) / 86400000);
+  const eod = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate(), 23, 59, 59, 999);
+  const hoursLeft = (eod - now) / 3600000;
+  return { has: true, daysLeft, hoursLeft, isOverdue: daysLeft < 0, within72h: hoursLeft >= 0 && hoursLeft <= 72 };
+}
+
+function deadlinePressure(task, now = new Date()) {
+  const d = deadlineInfo(task, now);
+  if (!d.has) return 0;
+  if (d.isOverdue) return 1;
+  if (d.daysLeft <= 1) return 1;
+  if (d.daysLeft <= 3) return 0.75;
+  if (d.daysLeft <= 7) return 0.5;
+  if (d.daysLeft <= 14) return 0.25;
+  return 0.1;
+}
+
+function taskUrgency(task, now = new Date()) {
+  return (deadlinePressure(task, now) + (Number(task.consequence) || 0)) / 2;
+}
+
+const STATE_MATRIX = {
+  Low: { Low: "ACTIVE", Moderate: "ACTIVE", High: "ACTIVE", Critical: "HEAVY" },
+  Moderate: { Low: "ACTIVE", Moderate: "ACTIVE", High: "HEAVY", Critical: "BURNING" },
+  High: { Low: "HEAVY", Moderate: "HEAVY", High: "BURNING", Critical: "BURNING" },
+  "Very High": { Low: "HEAVY", Moderate: "BURNING", High: "BURNING", Critical: "BURNING" },
+};
+
+function computeProject(project, tasks, capacity, now = new Date()) {
+  const mine = tasks.filter(t => t.projectId === project.id && !t.completed);
+  const planned = mine.filter(t => (Number(t.plannedThisWeek) || 0) > 0);
+  const Hw = mine.reduce((s, t) => s + (Number(t.plannedThisWeek) || 0), 0);
+  const Htotal = mine.reduce((s, t) => s + (Number(t.remainingEffort) || 0), 0);
+  const urg = planned.map(t => ({ t, u: taskUrgency(t, now) }));
+  const weightedU = Hw > 0 ? urg.reduce((s, x) => s + (Number(x.t.plannedThisWeek) || 0) * x.u, 0) / Hw : null;
+  const peakU = urg.length ? Math.max(...urg.map(x => x.u)) : null;
+  const L = capacity > 0 ? Hw / capacity : 0;
+  const workloadBand = Hw === 0 ? null : L < 0.15 ? "Low" : L < 0.30 ? "Moderate" : L < 0.50 ? "High" : "Very High";
+  const urgencyBand = weightedU === null ? null : weightedU < 0.25 ? "Low" : weightedU < 0.50 ? "Moderate" : weightedU < 0.75 ? "High" : "Critical";
+  const state = Hw === 0 ? "DORMANT" : STATE_MATRIX[workloadBand][urgencyBand];
+  // DDL 风险统计：不要求 Wt > 0（R3：DDL 风险独立于本周计划存在）
+  let d72 = 0, overdue = 0, hardNear = 0;
+  for (const t of mine) {
+    if ((Number(t.consequence) || 0) < 0.33) continue;
+    const d = deadlineInfo(t, now);
+    if (!d.has) continue;
+    if (d.isOverdue) overdue++;
+    else if (d.within72h) { d72++; if ((Number(t.consequence) || 0) >= 1) hardNear++; }
+  }
+  const immediateIds = urg.filter(x => x.u >= 0.75).map(x => x.t.id);
+  const unplannedIds = mine
+    .filter(t => (Number(t.plannedThisWeek) || 0) === 0 && (Number(t.consequence) || 0) >= 0.33 && deadlinePressure(t, now) >= 0.75)
+    .map(t => t.id);
+  return { id: project.id, name: project.name, archived: !!project.archived, Hw, Htotal, L, weightedU, peakU, workloadBand, urgencyBand, state, d72, overdue, hardNear, immediateIds, unplannedIds, activeCount: mine.length };
+}
+
+function computePortfolio(projects, tasks, capacity, now = new Date()) {
+  const live = projects.filter(p => !p.archived);
+  const active = tasks.filter(t => !t.completed && live.some(p => p.id === t.projectId));
+  const computed = live.map(p => computeProject(p, active, capacity, now));
+  const totalW = computed.reduce((s, p) => s + p.Hw, 0);
+  const Lp = capacity > 0 ? totalW / capacity : 0;
+  const withWork = computed.filter(p => p.Hw > 0);
+  const A = withWork.length;
+  const totalHw = withWork.reduce((s, p) => s + p.Hw, 0);
+  const shares = A > 0 ? withWork.map(p => p.Hw / totalHw).sort((a, b) => b - a) : [];
+  const Pmax = shares.length ? shares[0] : 0;
+  const Ptop2 = shares.length ? shares[0] + (shares[1] || 0) : 0;
+  let F = 0;
+  if (A > 1) {
+    const H = -shares.reduce((s, p) => s + p * Math.log(p), 0);
+    F = H / Math.log(A);
+  }
+  const B = computed.filter(p => p.state === "BURNING").length;
+  let D72 = 0, Doverdue = 0;
+  for (const t of active) {
+    if ((Number(t.consequence) || 0) < 0.33) continue;
+    const d = deadlineInfo(t, now);
+    if (!d.has) continue;
+    if (d.isOverdue) Doverdue++;
+    else if (d.within72h) D72++;
+  }
+  // 决策树：按序判定，命中即停（同一输入唯一输出）
+  let status;
+  if (B >= 3 || (B >= 2 && Lp >= 0.80) || (Lp > 1.00 && (Ptop2 < 0.70 || D72 >= 3 || Doverdue >= 1))) status = "BURNING OUT";
+  else if (Lp >= 0.60 && Lp <= 1.00 && B <= 1 && (Pmax >= 0.65 || Ptop2 >= 0.80) && D72 <= 1 && Doverdue === 0) status = "FOCUSED";
+  else if (Lp >= 0.80 || (Lp >= 0.60 && Ptop2 < 0.80) || B === 2 || D72 >= 2 || Doverdue >= 1) status = "LOADED";
+  else status = "CLEAR";
+  // Severity Bands：从 3 向 0 扫描，取最高命中档
+  const sevOver = Lp > 1.20 ? 3 : Lp > 1.00 ? 2 : Lp >= 0.80 ? 1 : 0;
+  const sevConc = B >= 3 ? 3 : B === 2 ? 2 : B === 1 ? 1 : 0;
+  let sevDead = 0;
+  if (Doverdue >= 2 || (Doverdue >= 1 && D72 >= 2)) sevDead = 3;
+  else if ((Doverdue === 0 && D72 >= 3) || Doverdue >= 1) sevDead = 2;
+  else if (Doverdue === 0 && D72 === 2) sevDead = 1;
+  let sevFrag = 0;
+  if (Lp > 1.00 && Ptop2 < 0.70) sevFrag = 3;
+  else if (Lp >= 0.80 && Ptop2 < 0.70) sevFrag = 2;
+  else if (Lp >= 0.60 && Ptop2 < 0.80) sevFrag = 1;
+  // tie-break：Concurrent Urgency -> Over-allocation -> Deadline -> Fragmentation
+  const PRESSURES = [
+    { key: "Concurrent Urgency", sev: sevConc, zh: "并行紧迫", desc: "多个项目同时 BURNING，多场硬仗并行" },
+    { key: "Over-allocation", sev: sevOver, zh: "总量超配", desc: "总工作量超过本周可支配时间" },
+    { key: "Deadline Concentration", sev: sevDead, zh: "截止集中", desc: "多个有实际后果的任务在 72h 内集中到期" },
+    { key: "Fragmentation", sev: sevFrag, zh: "注意力分散", desc: "中高负荷下精力散布在多个项目，上下文切换压力大" },
+  ];
+  const maxSev = Math.max(sevOver, sevConc, sevDead, sevFrag);
+  const pressure = maxSev === 0
+    ? { key: null, zh: "无明显压力", desc: "各维度均无显著压力", sev: 0 }
+    : PRESSURES.find(p => p.sev === maxSev);
+  return {
+    projects: computed, totalW, Lp, A, Pmax, Ptop2, F, B, D72, Doverdue,
+    status, pressure, severity: { over: sevOver, conc: sevConc, deadline: sevDead, fragmentation: sevFrag },
+  };
+}
+
+// 周标识：本周周一的日期字符串（YYYY-MM-DD）
+function weekIdOf(date = new Date()) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - day);
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+
+// 输入校验：0 ≤ Wt ≤ Ht
+function clampPlanned(Ht, Wt) {
+  return Math.max(0, Math.min(Number(Wt) || 0, Number(Ht) || 0));
+}
+
+// 新周规则（R2 周计划快照）：未完成任务保留，Wt 清零，Capacity 沿用
+function applyWeekRollover(state, currentWeekId) {
+  if (state.weekId === currentWeekId) return { state, changed: false };
+  const tasks = state.tasks.map(t => (t.completed || !(Number(t.plannedThisWeek) > 0)) ? t : { ...t, plannedThisWeek: 0 });
+  return { state: { ...state, tasks, weekId: currentWeekId, newWeekNotice: true }, changed: true };
+}
+// ===== ENGINE END =====
+
+// ---------- Store ----------
+const LS_KEY = "attention-portfolio-v1";
+
+function defaultState() {
+  return {
+    version: 1,
+    settings: { capacity: 24 },
+    weekId: weekIdOf(),
+    newWeekNotice: false,
+    projects: [],
+    tasks: [],
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function loadState() {
+  let raw = null;
+  try { raw = localStorage.getItem(LS_KEY); } catch (e) { /* localStorage 不可用 */ }
+  let s = null;
+  if (raw) { try { s = JSON.parse(raw); } catch (e) { s = null; } }
+  if (!s || !Array.isArray(s.projects) || !Array.isArray(s.tasks)) s = defaultState();
+  if (!s.settings || !(Number(s.settings.capacity) > 0)) s.settings = { capacity: 24 };
+  const rol = applyWeekRollover(s, weekIdOf());
+  if (rol.changed) { s = rol.state; persist(s); }
+  return s;
+}
+
+function persist(s) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch (e) { toast("保存失败：浏览器存储不可用"); }
+}
+function save() { persist(state); }
+
+// ---------- UI helpers ----------
+const $ = (sel, root = document) => root.querySelector(sel);
+const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtH = h => String(Math.round((Number(h) || 0) * 100) / 100);
+const pct = x => Math.round((Number(x) || 0) * 100) + "%";
+
+let state = loadState();
+let ui = { tab: "home", projectId: null };
+
+function stateMeta(s) {
+  return {
+    "CLEAR": { color: "var(--green)", en: "Light week. Nothing is fighting for you.", zh: "负荷轻，没有明显注意力冲突" },
+    "FOCUSED": { color: "var(--blue)", en: "Busy, but on one front.", zh: "投入高，但集中在一两个战场" },
+    "LOADED": { color: "var(--amber)", en: "Pressure is building up.", zh: "负荷、并行或 DDL 压力明显升高" },
+    "BURNING OUT": { color: "var(--red)", en: "Too many things need you at once.", zh: "多个项目同时需要你" },
+  }[s] || { color: "var(--gray)", en: "", zh: "" };
+}
+
+function projStateMeta(s) {
+  return {
+    "DORMANT": { color: "var(--gray)" },
+    "ACTIVE": { color: "var(--green)" },
+    "HEAVY": { color: "var(--amber)" },
+    "BURNING": { color: "var(--red)" },
+  }[s] || { color: "var(--gray)" };
+}
+
+function weekLabelOf() {
+  const p = state.weekId.split("-");
+  return Number(p[1]) + "/" + Number(p[2]) + " 起";
+}
+
+function fmtDateShort(s) {
+  const p = String(s).split("-").map(Number);
+  return p[1] + "/" + p[2];
+}
+
+// ---------- Why-this-state ----------
+function projectWhy(p) {
+  if (p.state === "DORMANT") {
+    let s = "本周没有计划投入（Wt = 0），项目处于休眠。";
+    if (p.unplannedIds.length) s += " 但存在 " + p.unplannedIds.length + " 个未排入本周的临近 DDL。";
+    return s;
+  }
+  const parts = [];
+  parts.push("占本周 Capacity " + pct(p.L) + "（" + p.workloadBand + " Workload）");
+  parts.push("加权紧迫度 " + p.weightedU.toFixed(2) + "（" + p.urgencyBand + " Urgency）");
+  if (p.d72 > 0) parts.push(p.d72 + " 个 72h 内有后果的 DDL");
+  if (p.overdue > 0) parts.push(p.overdue + " 个已逾期");
+  if (p.immediateIds.length) parts.push("⚡ " + p.immediateIds.length + " 个 Immediate Task");
+  if (p.unplannedIds.length) parts.push("⚠ " + p.unplannedIds.length + " 个 Unplanned Deadline");
+  return parts.join(" · ");
+}
+
+function portfolioWhy(pf) {
+  if (pf.status === "BURNING OUT") {
+    if (pf.B >= 3) return pf.B + " 个项目同时 BURNING（B ≥ 3）";
+    if (pf.B >= 2 && pf.Lp >= 0.8) return pf.B + " 个项目 BURNING 且负荷 " + pct(pf.Lp) + "（B ≥ 2 且 Lp ≥ 80%）";
+    return "负荷 " + pct(pf.Lp) + " 超过 Capacity，且伴随结构性压力（分散或 DDL 集中）";
+  }
+  if (pf.status === "FOCUSED") return "负荷 " + pct(pf.Lp) + "，精力集中（Top-2 占 " + pct(pf.Ptop2) + "），Burning ≤ 1，无 DDL / Overdue 冲突";
+  if (pf.status === "LOADED") {
+    const t = [];
+    if (pf.Lp >= 0.8) t.push("负荷 " + pct(pf.Lp));
+    else if (pf.Lp >= 0.6 && pf.Ptop2 < 0.8) t.push("中高负荷且分散（Top-2 仅 " + pct(pf.Ptop2) + "）");
+    if (pf.B === 2) t.push("2 个项目 BURNING");
+    if (pf.D72 >= 2) t.push(pf.D72 + " 个 72h 内有后果的 DDL");
+    if (pf.Doverdue >= 1) t.push(pf.Doverdue + " 个已逾期");
+    return t.join("，") || "压力升高";
+  }
+  return "负荷轻（" + pct(pf.Lp) + "），无并行燃烧，无明显近期 DDL 冲突";
+}
+
+// ---------- Views ----------
+function render() {
+  renderTabbar();
+  const v = $("#view");
+  if (ui.tab === "projects") v.innerHTML = projectsHTML();
+  else if (ui.tab === "settings") v.innerHTML = settingsHTML();
+  else if (ui.tab === "project") v.innerHTML = projectDetailHTML(ui.projectId);
+  else v.innerHTML = dashboardHTML();
+}
+
+const ICONS = {
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>',
+  projects: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><circle cx="9" cy="7" r="2.4" fill="#fff"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2.4" fill="#fff"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="7" cy="17" r="2.4" fill="#fff"/></svg>',
+};
+
+function renderTabbar() {
+  const tabs = [["home", "首页", ICONS.home], ["projects", "项目", ICONS.projects], ["settings", "设置", ICONS.settings]];
+  $("#tabbar").innerHTML = tabs.map(([tab, label, icon]) => {
+    const active = ui.tab === tab || (tab === "home" && ui.tab === "project");
+    return '<button data-action="tab" data-tab="' + tab + '" class="' + (active ? "active" : "") + '">' + icon + "<span>" + label + "</span></button>";
+  }).join("");
+}
+
+function weekBannerHTML() {
+  return '<div class="week-banner">'
+    + '<div><b>New week</b> - review this week\'s effort.</div>'
+    + '<div class="muted">任务已保留，本周计划 Wt 已清零；Capacity 沿用上周，可点击下方容量条调整。</div>'
+    + '<button class="btn-mini" data-action="dismiss-week">知道了</button>'
+    + "</div>";
+}
+
+function dashboardHTML() {
+  if (!state.projects.length) return onboardingHTML();
+  const C = state.settings.capacity;
+  const pf = computePortfolio(state.projects, state.tasks, C);
+  const meta = stateMeta(pf.status);
+  const loadPct = Math.min(100, Math.round(pf.Lp * 100));
+  const barColor = pf.Lp > 1 ? "var(--red)" : pf.Lp >= 0.8 ? "var(--amber)" : pf.Lp >= 0.6 ? "var(--blue)" : "var(--green)";
+  const chips = [];
+  chips.push('<span class="chip ' + (pf.B > 0 ? "chip-hot" : "") + '">' + pf.B + " Burning</span>");
+  chips.push('<span class="chip">' + pf.A + " Active Contexts</span>");
+  chips.push('<span class="chip ' + (pf.D72 >= 2 ? "chip-warm" : "") + '">' + pf.D72 + " DDL &lt; 72h</span>");
+  if (pf.Doverdue > 0) chips.push('<span class="chip chip-hot">' + pf.Doverdue + " Overdue</span>");
+  const rows = [...pf.projects].sort((a, b) => (b.Hw - a.Hw) || String(a.name).localeCompare(String(b.name)));
+  const totalHw = pf.projects.reduce((s, p) => s + p.Hw, 0);
+  const hasUnplannedWork = state.tasks.some(t => !t.completed && state.projects.some(p => p.id === t.projectId && !p.archived));
+  return (state.newWeekNotice ? weekBannerHTML() : "")
+    + '<div class="eyebrow">THIS WEEK · ' + weekLabelOf() + "</div>"
+    + '<div class="state-big" style="color:' + meta.color + '">' + pf.status + "</div>"
+    + '<div class="tagline">' + esc(meta.en) + '</div>'
+    + '<div class="tagline-zh">' + esc(meta.zh) + "</div>"
+    + '<div class="cap-block" data-action="edit-capacity">'
+    + '<div class="cap-bar"><div class="cap-fill" style="width:' + loadPct + "%;background:" + barColor + '"></div></div>'
+    + '<div class="cap-text"><b>' + fmtH(pf.totalW) + "h</b> / " + fmtH(C) + "h Weekly Capacity"
+    + '<span class="cap-edit">调整</span>'
+    + (pf.Lp > 1 ? '<span class="cap-over">超配 ' + pct(pf.Lp - 1) + "</span>" : "")
+    + "</div></div>"
+    + '<div class="chips">' + chips.join("") + "</div>"
+    + '<div class="card press-card" style="border-left-color:' + meta.color + '">'
+    + '<div class="eyebrow">MAIN PRESSURE</div>'
+    + '<div class="press-name">' + (pf.pressure.key ? esc(pf.pressure.key) : "-") + '<span class="press-zh">' + esc(pf.pressure.zh) + "</span></div>"
+    + '<div class="muted">' + esc(pf.pressure.desc) + "</div>"
+    + '<div class="why-line">' + esc(portfolioWhy(pf)) + "</div>"
+    + "</div>"
+    + (pf.totalW === 0 && hasUnplannedWork
+      ? '<div class="week-banner subtle"><div><b>本周 Wt 全部为 0</b></div><div class="muted">为任务分配「本周计划 Wt」后，负荷诊断才会开始工作。</div></div>'
+      : "")
+    + '<button class="btn-primary" data-action="add-task">＋ 添加任务</button>'
+    + '<div class="eyebrow lg">WHERE YOUR ATTENTION GOES</div>'
+    + '<div class="card list">'
+    + (rows.length
+      ? rows.map(p => {
+          const share = totalHw > 0 ? p.Hw / totalHw : 0;
+          return '<div class="prow" data-action="open-project" data-id="' + p.id + '">'
+            + '<div class="prow-l"><div class="pname">' + esc(p.name) + '</div>'
+            + '<div class="pbar"><i style="width:' + Math.round(share * 100) + '%"></i></div></div>'
+            + '<div class="prow-r"><span class="pnum">' + fmtH(p.Hw) + 'h</span>'
+            + '<span class="badge b-' + p.state + '">' + p.state + "</span></div>"
+            + "</div>";
+        }).join("")
+      : '<div class="empty">没有活跃项目（全部已归档），可在「项目」页恢复。</div>')
+    + "</div>"
+    + '<div class="diag-note">诊断指标 · Load ' + pct(pf.Lp) + " · Top-2 " + pct(pf.Ptop2) + " · F " + pf.F.toFixed(2) + "</div>";
+}
+
+function onboardingHTML() {
+  return '<div class="hero">'
+    + '<div class="eyebrow">ATTENTION PORTFOLIO</div>'
+    + "<h1>我这周到底把自己<br>安排成什么样了？</h1>"
+    + '<p class="muted">轻量级项目精力负荷诊断。你输入现实（任务、剩余工时、本周计划、DDL、延期后果），系统照出注意力冲突，决定权在你。</p>'
+    + '<div class="hero-steps">'
+    + '<div class="hstep"><b>1</b><span>设置本周可用时间（Weekly Capacity）</span><button class="btn-mini" data-action="edit-capacity">' + fmtH(state.settings.capacity) + 'h 调整</button></div>'
+    + '<div class="hstep"><b>2</b><span>创建长期项目（跨周复用）</span><button class="btn-mini" data-action="add-project">＋ 创建</button></div>'
+    + '<div class="hstep"><b>3</b><span>为项目录入任务，分配本周计划 Wt</span></div>'
+    + "</div>"
+    + '<p class="muted sm" style="margin-top:14px">口径：Weekly Load 用 Wt；任务总规模用 Ht（0 ≤ Wt ≤ Ht）。</p>'
+    + "</div>";
+}
+
+function projectsHTML() {
+  const live = state.projects.filter(p => !p.archived);
+  const arch = state.projects.filter(p => p.archived);
+  const pf = computePortfolio(state.projects, state.tasks, state.settings.capacity);
+  const byId = {};
+  pf.projects.forEach(p => { byId[p.id] = p; });
+  return '<div class="view-head"><div class="eyebrow">PROJECTS</div>'
+    + '<button class="btn-ghost" data-action="add-project">＋ 新建项目</button></div>'
+    + '<div class="card list">'
+    + (live.length
+      ? live.map(p => {
+          const c = byId[p.id];
+          const st = c ? c.state : "DORMANT";
+          return '<div class="prow" data-action="open-project" data-id="' + p.id + '">'
+            + '<div class="prow-l"><div class="pname">' + esc(p.name) + "</div>"
+            + (p.description ? '<div class="pdesc">' + esc(p.description) + "</div>" : "")
+            + "</div>"
+            + '<div class="prow-r"><span class="pnum">' + fmtH(c ? c.Hw : 0) + 'h</span>'
+            + '<span class="badge b-' + st + '">' + st + "</span></div>"
+            + "</div>";
+        }).join("")
+      : '<div class="empty">还没有项目，点右上角新建。</div>')
+    + "</div>"
+    + (arch.length
+      ? '<div class="eyebrow lg">已归档（不参与计算）</div><div class="card list">'
+      + arch.map(p => '<div class="prow plain"><div class="pname">' + esc(p.name) + '</div>'
+        + '<div class="prow-r"><button class="btn-mini" data-action="unarchive-project" data-id="' + p.id + '">恢复</button>'
+        + '<button class="btn-mini danger" data-action="del-project" data-id="' + p.id + '">删除</button></div></div>').join("")
+      + "</div>"
+      : "");
+}
+
+function projectDetailHTML(projectId) {
+  const project = state.projects.find(p => p.id === projectId);
+  if (!project) { ui.tab = "home"; return dashboardHTML(); }
+  const C = state.settings.capacity;
+  const pf = computePortfolio(state.projects, state.tasks, C);
+  const p = pf.projects.find(x => x.id === projectId)
+    || computeProject(project, state.tasks.filter(t => !t.completed), C);
+  const m = projStateMeta(p.state);
+  const tasks = state.tasks.filter(t => t.projectId === projectId);
+  const unfinished = tasks.filter(t => !t.completed).sort((a, b) => taskUrgency(b) - taskUrgency(a));
+  const done = tasks.filter(t => t.completed);
+  const flags = [];
+  if (p.immediateIds.length) flags.push('<span class="flag flag-hot">⚡ ' + p.immediateIds.length + " Immediate Task</span>");
+  if (p.unplannedIds.length) flags.push('<span class="flag flag-hot">⚠ ' + p.unplannedIds.length + " Unplanned Deadline</span>");
+  if (p.d72) flags.push('<span class="flag">' + p.d72 + " 个 DDL &lt; 72h</span>");
+  if (p.overdue) flags.push('<span class="flag flag-hot">' + p.overdue + " 个已逾期</span>");
+  if (p.peakU !== null) flags.push('<span class="flag">Peak Urgency ' + p.peakU.toFixed(2) + "</span>");
+  return '<div class="view-head">'
+    + '<button class="btn-ghost" data-action="back">← 返回</button>'
+    + '<div class="head-actions">'
+    + '<button class="btn-mini" data-action="edit-project" data-id="' + project.id + '">编辑</button>'
+    + (project.archived
+      ? '<button class="btn-mini" data-action="unarchive-project" data-id="' + project.id + '">恢复</button>'
+      : '<button class="btn-mini" data-action="archive-project" data-id="' + project.id + '">归档</button>')
+    + '<button class="btn-mini danger" data-action="del-project" data-id="' + project.id + '">删除</button>'
+    + "</div></div>"
+    + '<div class="eyebrow">PROJECT</div>'
+    + '<div class="state-big sm" style="color:' + m.color + '">' + esc(project.name) + " · " + p.state + "</div>"
+    + (project.description ? '<div class="muted" style="margin-top:2px">' + esc(project.description) + "</div>" : "")
+    + (project.archived ? '<div class="arch-banner">已归档：不参与本周 Portfolio 计算。</div>' : "")
+    + '<div class="card"><div class="eyebrow">WHY THIS STATE</div><div class="why-text">' + esc(projectWhy(p)) + "</div></div>"
+    + '<div class="statgrid">'
+    + '<div class="stat"><b>' + fmtH(p.Hw) + 'h</b><span>本周计划 Wt</span></div>'
+    + '<div class="stat"><b>' + pct(p.L) + '</b><span>占 Capacity</span></div>'
+    + '<div class="stat"><b>' + fmtH(p.Htotal) + 'h</b><span>剩余总量 Ht</span></div>'
+    + '<div class="stat"><b>' + p.activeCount + "</b><span>未完成任务</span></div>"
+    + "</div>"
+    + (flags.length ? '<div class="flags">' + flags.join("") + "</div>" : "")
+    + '<button class="btn-primary" data-action="add-task">＋ 添加任务</button>'
+    + '<div class="eyebrow lg">TASKS · 未完成 ' + unfinished.length + "</div>"
+    + '<div class="card list">'
+    + (unfinished.length ? unfinished.map(t => taskRowHTML(t)).join("") : '<div class="empty">没有未完成任务</div>')
+    + "</div>"
+    + (done.length
+      ? '<div class="eyebrow lg">已完成 ' + done.length + "</div>"
+      + '<div class="card list">' + done.map(t => taskRowHTML(t)).join("") + "</div>"
+      : "");
+}
+
+function deadlineChip(t, d) {
+  if (!d.has) return "";
+  if (d.isOverdue) return '<span class="tag tag-hot">逾期 ' + (-d.daysLeft) + " 天</span>";
+  if (d.daysLeft === 0) return '<span class="tag tag-hot">今天到期</span>';
+  if (d.daysLeft === 1) return '<span class="tag tag-hot">明天到期</span>';
+  if (d.daysLeft <= 3) return '<span class="tag tag-warm">' + d.daysLeft + " 天后</span>";
+  return '<span class="tag">' + fmtDateShort(t.deadline) + "</span>";
+}
+
+function taskRowHTML(t) {
+  const u = taskUrgency(t);
+  const d = deadlineInfo(t);
+  const cons = CONSEQUENCE_LEVELS.find(c => Math.abs(c.value - (Number(t.consequence) || 0)) < 0.001);
+  const meta = ['<span class="tnum">本周 ' + fmtH(t.plannedThisWeek) + "h</span>", '<span class="tnum">剩余 ' + fmtH(t.remainingEffort) + "h</span>"];
+  meta.push(deadlineChip(t, d));
+  if ((Number(t.consequence) || 0) >= 0.33 && cons) meta.push('<span class="tag">' + esc(cons.label) + "</span>");
+  if (!t.completed && (Number(t.plannedThisWeek) || 0) > 0 && u >= 0.75) meta.push('<span class="tag tag-hot">⚡ Immediate</span>');
+  if (!t.completed && (Number(t.plannedThisWeek) || 0) === 0 && (Number(t.consequence) || 0) >= 0.33 && deadlinePressure(t) >= 0.75) meta.push('<span class="tag tag-hot">⚠ Unplanned</span>');
+  return '<div class="trow' + (t.completed ? " done" : "") + '">'
+    + '<button class="check' + (t.completed ? " on" : "") + '" data-action="toggle-task" data-id="' + t.id + '" aria-label="完成">' + (t.completed ? "✓" : "") + "</button>"
+    + '<div class="tmain" data-action="edit-task" data-id="' + t.id + '">'
+    + '<div class="tname">' + esc(t.name) + "</div>"
+    + '<div class="tmeta">' + meta.join("") + "</div>"
+    + "</div>"
+    + '<button class="tdel" data-action="del-task" data-id="' + t.id + '" aria-label="删除">×</button>'
+    + "</div>";
+}
+
+function settingsHTML() {
+  return '<div class="eyebrow">SETTINGS</div>'
+    + '<h2 class="page-title">设置</h2>'
+    + '<div class="card">'
+    + '<label class="f">Weekly Capacity（本周可用于项目的总时间，小时）'
+    + '<input id="cap-live" type="number" min="1" max="168" step="0.5" inputmode="decimal" value="' + state.settings.capacity + '">'
+    + '<span class="hint">修改后实时生效，全部诊断立即重算。</span></label>'
+    + "</div>"
+    + '<div class="card">'
+    + '<div class="card-title">数据备份</div>'
+    + '<p class="muted">数据仅保存在本设备浏览器（localStorage），不上传任何服务器。可用 JSON 导出 / 导入做迁移与备份。</p>'
+    + '<div class="btn-row">'
+    + '<button class="btn-ghost" data-action="export">导出 JSON</button>'
+    + '<button class="btn-ghost" data-action="import">导入 JSON</button>'
+    + "</div>"
+    + '<input type="file" id="import-file" accept=".json,application/json" hidden>'
+    + "</div>"
+    + '<div class="card danger-zone">'
+    + '<div class="card-title">清空数据</div>'
+    + '<p class="muted">删除全部项目、任务与设置，不可恢复。建议先导出备份。</p>'
+    + '<div class="btn-row"><button class="btn-mini danger" data-action="wipe">删除全部数据</button></div>'
+    + "</div>"
+    + '<div class="about">'
+    + "<b>Attention Portfolio 0.1</b><br>"
+    + "Attention / Project Load Diagnosis · 非医学或心理学诊断工具<br>"
+    + "用户输入现实，系统判断状态，用户自己做决定。<br>"
+    + state.projects.length + " 个项目 · " + state.tasks.length + " 个任务 · 当前周 " + state.weekId
+    + "</div>";
+}
+
+// ---------- Modals ----------
+function openModal(inner) {
+  $("#modal-root").innerHTML = '<div class="backdrop" data-action="close-modal"></div><div class="sheet">' + inner + "</div>";
+  document.body.style.overflow = "hidden";
+}
+function closeModal() {
+  $("#modal-root").innerHTML = "";
+  document.body.style.overflow = "";
+}
+
+function openTaskForm(taskId, presetProjectId) {
+  const t = taskId ? state.tasks.find(x => x.id === taskId) : null;
+  const keepId = t ? t.projectId : presetProjectId;
+  const projects = state.projects.filter(p => !p.archived || p.id === keepId);
+  if (!projects.length) { toast("请先创建一个项目"); openProjectForm(); return; }
+  const cur = t || { name: "", projectId: presetProjectId || projects[0].id, remainingEffort: 2, plannedThisWeek: null, deadline: null, consequence: 0, completed: false };
+  const cons = Number(t ? t.consequence : 0);
+  openModal('<h3 class="m-title">' + (t ? "编辑任务" : "新增任务") + "</h3>"
+    + '<form id="task-form" novalidate>'
+    + '<label class="f">任务名称<input name="name" maxlength="60" placeholder="例如：完成联调" value="' + esc(cur.name) + '"></label>'
+    + (presetProjectId ? "" : '<label class="f">所属项目<select name="projectId">'
+      + projects.map(p => '<option value="' + p.id + '"' + (p.id === cur.projectId ? " selected" : "") + ">" + esc(p.name) + "</option>").join("")
+      + "</select></label>")
+    + '<div class="grid2">'
+    + '<label class="f">剩余工时 Ht（h）<input name="remainingEffort" id="f-ht" type="number" min="0" step="0.5" inputmode="decimal" value="' + cur.remainingEffort + '"></label>'
+    + '<label class="f">本周计划 Wt（h）<input name="plannedThisWeek" id="f-wt" type="number" min="0" step="0.5" inputmode="decimal" value="' + (cur.plannedThisWeek == null ? cur.remainingEffort : cur.plannedThisWeek) + '"></label>'
+    + "</div>"
+    + '<div class="hint">0 ≤ Wt ≤ Ht · 新任务默认 Wt = Ht · 新周 Wt 自动清零</div>'
+    + '<label class="f">截止日期（可选）<input name="deadline" type="date" value="' + esc(cur.deadline || "") + '"></label>'
+    + '<div class="f">延期后果'
+    + '<div class="seg" id="cons-seg">'
+    + CONSEQUENCE_LEVELS.map(c => '<button type="button" data-v="' + c.value + '" class="' + (Math.abs(c.value - cons) < 0.001 ? "on" : "") + '">' + c.label + "</button>").join("")
+    + "</div>"
+    + '<input type="hidden" name="consequence" value="' + cons + '">'
+    + "</div>"
+    + (t ? '<label class="f checkrow"><input type="checkbox" name="completed"' + (t.completed ? " checked" : "") + "> 已完成（完成后 Wt 置 0，不计入负荷）</label>" : "")
+    + '<button class="btn-primary" type="submit">保存</button>'
+    + "</form>");
+  const form = $("#task-form");
+  const seg = $("#cons-seg");
+  const consInput = form.querySelector('[name="consequence"]');
+  seg.addEventListener("click", e => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    consInput.value = b.dataset.v;
+    seg.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  });
+  const ht = $("#f-ht"), wt = $("#f-wt");
+  let wtTouched = !!t;
+  wt.addEventListener("input", () => { wtTouched = true; });
+  ht.addEventListener("input", () => { if (!wtTouched) wt.value = ht.value; });
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const name = String(fd.get("name") || "").trim();
+    if (!name) { toast("请填写任务名称"); return; }
+    const projectId = presetProjectId || String(fd.get("projectId") || "") || projects[0].id;
+    if (!state.projects.some(p => p.id === projectId)) { toast("项目不存在"); return; }
+    const Ht = Math.max(0, parseFloat(fd.get("remainingEffort")) || 0);
+    const WtIn = Math.max(0, parseFloat(fd.get("plannedThisWeek")) || 0);
+    const completed = !!fd.get("completed");
+    const deadline = String(fd.get("deadline") || "").trim() || null;
+    const consequence = parseFloat(fd.get("consequence")) || 0;
+    let Wt = clampPlanned(Ht, WtIn);
+    const clamped = WtIn > Wt + 1e-9;
+    if (completed) Wt = 0;
+    if (t) Object.assign(t, { name, projectId, remainingEffort: Ht, plannedThisWeek: Wt, deadline, consequence, completed });
+    else state.tasks.push({ id: uid(), name, projectId, remainingEffort: Ht, plannedThisWeek: Wt, deadline, consequence, completed, createdAt: new Date().toISOString() });
+    save(); closeModal(); render();
+    if (clamped) toast("本周计划已随剩余工作量下调至 " + fmtH(Wt) + "h");
+  });
+}
+
+function openProjectForm(projectId) {
+  const p = projectId ? state.projects.find(x => x.id === projectId) : null;
+  openModal('<h3 class="m-title">' + (p ? "编辑项目" : "新建项目") + "</h3>"
+    + '<form id="project-form" novalidate>'
+    + '<label class="f">项目名称<input name="name" maxlength="40" placeholder="例如：Quant 研究" value="' + esc(p ? p.name : "") + '"></label>'
+    + '<label class="f">说明（可选）<textarea name="description" rows="2" maxlength="120" placeholder="一句话即可">' + esc(p ? p.description || "" : "") + "</textarea></label>"
+    + '<div class="hint">项目是长期对象，跨周复用；本周投入由任务的 Wt 自动求和，无需手动填写。</div>'
+    + '<button class="btn-primary" type="submit">保存</button>'
+    + "</form>");
+  $("#project-form").addEventListener("submit", e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const name = String(fd.get("name") || "").trim();
+    if (!name) { toast("请填写项目名称"); return; }
+    const description = String(fd.get("description") || "").trim();
+    if (p) Object.assign(p, { name, description });
+    else state.projects.push({ id: uid(), name, description, archived: false, createdAt: new Date().toISOString() });
+    save(); closeModal(); render();
+  });
+}
+
+function openCapacityForm() {
+  openModal('<h3 class="m-title">Weekly Capacity</h3>'
+    + '<p class="muted">本周现实中可用于个人项目的总时间。</p>'
+    + '<form id="cap-form">'
+    + '<label class="f">小时 / 周<input name="capacity" type="number" min="1" max="168" step="0.5" inputmode="decimal" required value="' + state.settings.capacity + '"></label>'
+    + '<button class="btn-primary" type="submit">保存</button>'
+    + "</form>");
+  $("#cap-form").addEventListener("submit", e => {
+    e.preventDefault();
+    const v = parseFloat(new FormData(e.target).get("capacity"));
+    if (!(v >= 1)) { toast("至少 1 小时"); return; }
+    state.settings.capacity = Math.min(168, v);
+    save(); closeModal(); render();
+  });
+}
+
+// ---------- Actions ----------
+function toggleTask(id) {
+  const t = state.tasks.find(x => x.id === id);
+  if (!t) return;
+  t.completed = !t.completed;
+  let msg = "";
+  if (t.completed) {
+    if ((Number(t.plannedThisWeek) || 0) > 0) msg = "已完成 · 本周计划已清零";
+    t.plannedThisWeek = 0;
+  }
+  save(); render();
+  if (msg) toast(msg);
+}
+
+function exportJSON() {
+  try {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "attention-portfolio-" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast("已导出 JSON 备份");
+  } catch (e) { toast("导出失败"); }
+}
+
+function handleImport(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(String(r.result));
+      if (!d || !Array.isArray(d.projects) || !Array.isArray(d.tasks)) throw new Error("bad");
+      if (!confirm("导入将覆盖当前所有数据，继续？")) return;
+      const base = defaultState();
+      const merged = Object.assign({}, base, d, {
+        settings: { capacity: (d.settings && Number(d.settings.capacity) >= 1) ? d.settings.capacity : base.settings.capacity },
+      });
+      delete merged.newWeekNotice;
+      state = applyWeekRollover(merged, weekIdOf()).state;
+      save(); render();
+      toast("导入成功");
+    } catch (e) { toast("导入失败：文件格式不正确"); }
+  };
+  r.readAsText(f);
+  input.value = "";
+}
+
+function wipeData() {
+  if (!confirm("确定清空所有项目、任务与设置？此操作不可恢复。")) return;
+  try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ }
+  state = defaultState();
+  ui = { tab: "home", projectId: null };
+  render();
+  toast("已清空");
+}
+
+// ---------- Toast ----------
+var toastTimer = null;
+function toast(msg) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+// ---------- Events ----------
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-action]");
+  if (!el) return;
+  const a = el.dataset.action;
+  const id = el.dataset.id;
+  if (a === "tab") { ui = { tab: el.dataset.tab, projectId: null }; window.scrollTo(0, 0); render(); }
+  else if (a === "open-project") { ui = { tab: "project", projectId: id }; window.scrollTo(0, 0); render(); }
+  else if (a === "back") { ui = { tab: "home", projectId: null }; render(); }
+  else if (a === "add-task") openTaskForm(null, ui.tab === "project" ? ui.projectId : null);
+  else if (a === "edit-task") openTaskForm(id);
+  else if (a === "toggle-task") toggleTask(id);
+  else if (a === "del-task") {
+    const t = state.tasks.find(x => x.id === id);
+    if (t && confirm("删除任务「" + t.name + "」？")) {
+      state.tasks = state.tasks.filter(x => x.id !== id);
+      save(); render();
+    }
+  }
+  else if (a === "add-project") openProjectForm();
+  else if (a === "edit-project") openProjectForm(id);
+  else if (a === "archive-project") {
+    const p = state.projects.find(x => x.id === id);
+    if (p && confirm("归档项目「" + p.name + "」？归档后不参与本周计算，可随时恢复。")) {
+      p.archived = true;
+      if (ui.projectId === id) ui = { tab: "home", projectId: null };
+      save(); render();
+    }
+  }
+  else if (a === "unarchive-project") {
+    const p = state.projects.find(x => x.id === id);
+    if (p) { p.archived = false; save(); render(); }
+  }
+  else if (a === "del-project") {
+    const p = state.projects.find(x => x.id === id);
+    if (p && confirm("删除项目「" + p.name + "」及其全部任务？不可恢复。")) {
+      state.projects = state.projects.filter(x => x.id !== id);
+      state.tasks = state.tasks.filter(t => t.projectId !== id);
+      if (ui.projectId === id) ui = { tab: "home", projectId: null };
+      save(); render();
+    }
+  }
+  else if (a === "edit-capacity") openCapacityForm();
+  else if (a === "export") exportJSON();
+  else if (a === "import") { const inp = $("#import-file"); if (inp) inp.click(); }
+  else if (a === "wipe") wipeData();
+  else if (a === "dismiss-week") { state.newWeekNotice = false; save(); render(); }
+  else if (a === "close-modal") closeModal();
+});
+
+document.addEventListener("change", e => {
+  if (e.target.id === "cap-live") {
+    const v = parseFloat(e.target.value);
+    if (v >= 1) { state.settings.capacity = Math.min(168, v); save(); render(); }
+    else toast("至少 1 小时");
+  }
+  if (e.target.id === "import-file") handleImport(e.target);
+});
+
+// ---------- Boot ----------
+render();
+</script>
+</body>
+</html>
