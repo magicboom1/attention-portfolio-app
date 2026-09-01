@@ -136,6 +136,44 @@ textarea { resize: vertical; }
 .about { margin-top: 18px; font-size: 12px; color: var(--muted); line-height: 1.7; text-align: center; }
 #toast { position: fixed; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%) translateY(6px); background: #232329; color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 13px; z-index: 60; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; max-width: 86vw; text-align: center; }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+/* ---------- To-do 视图 ---------- */
+.vseg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 2px; }
+.vseg button { padding: 9px 6px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); font-size: 13.5px; font-weight: 600; color: #55555e; }
+.vseg button.on { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 2px; }
+.cal-title { font-size: 19px; font-weight: 700; }
+.cal-nav { display: flex; gap: 6px; }
+.eyebrow.hot { color: var(--red); }
+.pace-strip { margin-top: 14px; padding: 10px 14px; border-radius: 12px; background: var(--brand-soft); font-size: 13px; color: var(--muted); }
+.pace-strip b { color: var(--text); font-size: 14px; }
+.wall-banner { margin-top: 12px; padding: 10px 14px; border-radius: 12px; background: var(--amber-bg); color: var(--amber); font-size: 13px; font-weight: 700; }
+.wall-note { margin-top: 8px; padding: 8px 12px; border-radius: 10px; background: var(--amber-bg); color: var(--amber); font-size: 12.5px; font-weight: 600; }
+.wk-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 12px; }
+.wk-day { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 7px 0 5px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.wk-day .wd { font-size: 11px; color: var(--muted); font-weight: 600; }
+.wk-day .dn { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.wk-day .wk-cnt { font-size: 10.5px; font-weight: 700; color: var(--muted); min-height: 14px; }
+.wk-day .wk-cnt.warm { color: var(--amber); }
+.wk-day .wk-cnt.hot { color: var(--red); }
+.wk-day.today { border-color: var(--brand); background: var(--brand-soft); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 12px; }
+.cal-wd { text-align: center; font-size: 11px; color: var(--muted); font-weight: 700; padding: 2px 0 6px; }
+.cal-cell { aspect-ratio: 1 / .85; border: none; background: none; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--text); padding: 0; cursor: default; }
+.cal-cell.out { color: #c3c3cb; }
+.cal-cell.has { cursor: pointer; }
+.cal-cell.wallweek { background: var(--amber-bg); }
+.cal-cell.daywall { background: var(--amber-bg); color: var(--amber); font-weight: 800; }
+.cal-cell.tday { outline: 2px solid var(--brand); outline-offset: -2px; }
+.cal-cell .pips { display: flex; gap: 2px; height: 5px; align-items: center; }
+.cal-cell .pip { width: 5px; height: 5px; border-radius: 999px; background: #b9b9c2; }
+.cal-cell .pip.warm { background: var(--amber); }
+.cal-cell .pip.hot { background: var(--red); }
+.cal-cell .pip-n { font-size: 10.5px; font-weight: 800; color: var(--muted); line-height: 1; }
+.lk-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.lk-row.wall .lk-date { color: var(--amber); font-weight: 700; }
+.lk-date { flex: 1; font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.lk-cnt { font-size: 12.5px; color: var(--muted); }
+.lk-total { padding: 10px 8px 4px; font-size: 12.5px; color: var(--muted); }
 @media (min-width: 700px) { body { background: #ececef; } #app { padding-top: 32px; } }
 </style>
 </head>
@@ -305,6 +343,88 @@ function applyWeekRollover(state, currentWeekId) {
   const tasks = state.tasks.map(t => (t.completed || !(Number(t.plannedThisWeek) > 0)) ? t : { ...t, plannedThisWeek: 0 });
   return { state: { ...state, tasks, weekId: currentWeekId, newWeekNotice: true }, changed: true };
 }
+
+// ---------- To-do 视图计算（纯函数） ----------
+// 日期串统一为本地时区 YYYY-MM-DD，字典序即时间序。
+// 口径：DDL 只有日期 -> 日视图是"到期账本"；Wt 是周粒度 -> 日级衍生量只有"周剩余 ÷ 剩余天数"。
+
+function dateStrOf(d) {
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+
+function addDaysStr(s, n) {
+  const d = parseDateStr(s);
+  d.setDate(d.getDate() + n);
+  return dateStrOf(d);
+}
+
+function weekStartStr(s) {
+  const d = parseDateStr(s);
+  d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+  return dateStrOf(d);
+}
+
+function shiftMonthStr(s, n) {
+  const d = parseDateStr(s);
+  return dateStrOf(new Date(d.getFullYear(), d.getMonth() + n, 1));
+}
+
+// 日视图分桶（互斥，按序判定）：逾期 / 今天 / 72h 内 / 更远
+function todoBuckets(tasks, now = new Date()) {
+  const res = { overdue: [], today: [], soon: [], future: [] };
+  for (const t of tasks) {
+    if (t.completed || !t.deadline) continue;
+    const d = deadlineInfo(t, now);
+    if (!d.has) continue;
+    if (d.isOverdue) res.overdue.push(t);
+    else if (d.daysLeft === 0) res.today.push(t);
+    else if (d.within72h) res.soon.push(t);
+    else res.future.push(t);
+  }
+  return res;
+}
+
+// 周/月视图分组：[from, to] 闭区间内按 DDL 日期聚合（仅未完成、有 DDL）
+function groupByDeadline(tasks, fromStr, toStr) {
+  const g = {};
+  for (const t of tasks) {
+    if (t.completed || !t.deadline) continue;
+    if (t.deadline < fromStr || t.deadline > toStr) continue;
+    (g[t.deadline] = g[t.deadline] || []).push(t);
+  }
+  return g;
+}
+
+// DDL 墙判定（待办口径）：单周 DDL ≥ 3、单日 DDL ≥ 2、或 72h 内有 DDL，任一命中即为墙。
+// 逾期不计入 72h 口径（逾期另有红色标记通道）。
+function wallInfo(tasks, now = new Date()) {
+  const weeks = {};
+  const days = {};
+  for (const t of tasks) {
+    if (t.completed || !t.deadline) continue;
+    const d = deadlineInfo(t, now);
+    if (!d.has) continue;
+    const ws = weekStartStr(t.deadline);
+    const w = weeks[ws] = weeks[ws] || { start: ws, count: 0, dayMax: 0, near72: 0, reasons: [], wall: false };
+    w.count++;
+    const day = days[t.deadline] = days[t.deadline] || { count: 0, hot: false, overdue: false };
+    day.count++;
+    if (d.isOverdue) day.overdue = true;
+    else if (d.within72h) { day.hot = true; w.near72++; }
+  }
+  for (const ws in weeks) {
+    const w = weeks[ws];
+    for (const ds in days) {
+      if (weekStartStr(ds) === ws && days[ds].count > w.dayMax) w.dayMax = days[ds].count;
+    }
+    if (w.count >= 3) w.reasons.push("单周 " + w.count + " 个 DDL");
+    if (w.dayMax >= 2) w.reasons.push("单日最多 " + w.dayMax + " 个");
+    if (w.near72 > 0) w.reasons.push("72h 内 " + w.near72 + " 个");
+    w.wall = w.reasons.length > 0;
+  }
+  return { weeks, days };
+}
 // ===== ENGINE END =====
 
 // ---------- Store ----------
@@ -348,6 +468,7 @@ const pct = x => Math.round((Number(x) || 0) * 100) + "%";
 
 let state = loadState();
 let ui = { tab: "home", projectId: null };
+let todoUI = { view: "day", anchor: null }; // 待办视图子状态：anchor 为 null 表示锚定今天
 
 function stateMeta(s) {
   return {
@@ -418,6 +539,7 @@ function render() {
   renderTabbar();
   const v = $("#view");
   if (ui.tab === "projects") v.innerHTML = projectsHTML();
+  else if (ui.tab === "todo") v.innerHTML = todoHTML();
   else if (ui.tab === "settings") v.innerHTML = settingsHTML();
   else if (ui.tab === "project") v.innerHTML = projectDetailHTML(ui.projectId);
   else v.innerHTML = dashboardHTML();
@@ -427,10 +549,11 @@ const ICONS = {
   home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>',
   projects: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
   settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><circle cx="9" cy="7" r="2.4" fill="#fff"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2.4" fill="#fff"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="7" cy="17" r="2.4" fill="#fff"/></svg>',
+  todo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="m9 15.5 2 2 4-4.5"/></svg>',
 };
 
 function renderTabbar() {
-  const tabs = [["home", "首页", ICONS.home], ["projects", "项目", ICONS.projects], ["settings", "设置", ICONS.settings]];
+  const tabs = [["home", "首页", ICONS.home], ["projects", "项目", ICONS.projects], ["todo", "待办", ICONS.todo], ["settings", "设置", ICONS.settings]];
   $("#tabbar").innerHTML = tabs.map(([tab, label, icon]) => {
     const active = ui.tab === tab || (tab === "home" && ui.tab === "project");
     return '<button data-action="tab" data-tab="' + tab + '" class="' + (active ? "active" : "") + '">' + icon + "<span>" + label + "</span></button>";
@@ -652,6 +775,206 @@ function settingsHTML() {
     + "</div>";
 }
 
+// ---------- To-do 视图（DDL 账本：同一份任务数据的时间轴投影，零新增输入） ----------
+const WD_ZH = ["日", "一", "二", "三", "四", "五", "六"];
+const weekdayZh = s => WD_ZH[parseDateStr(s).getDay()];
+const byUtDesc = (x, y) => (taskUrgency(y) - taskUrgency(x)) || (x.deadline < y.deadline ? -1 : x.deadline > y.deadline ? 1 : 0);
+
+function liveTasks() {
+  const live = new Set(state.projects.filter(p => !p.archived).map(p => p.id));
+  return state.tasks.filter(t => !t.completed && live.has(t.projectId));
+}
+
+function todoFooterStats(now) {
+  const live = new Set(state.projects.filter(p => !p.archived).map(p => p.id));
+  let doneToday = 0, noDate = 0;
+  for (const t of state.tasks) {
+    if (!live.has(t.projectId)) continue;
+    if (t.completed) {
+      if (t.completedAt) {
+        const d = new Date(t.completedAt);
+        if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()) doneToday++;
+      }
+    } else if (!t.deadline) noDate++;
+  }
+  return { doneToday, noDate };
+}
+
+function todoSection(title, list, hot) {
+  if (!list.length) return "";
+  return '<div class="eyebrow lg' + (hot ? " hot" : "") + '">' + esc(title) + "</div>"
+    + '<div class="card list">' + list.map(t => taskRowHTML(t)).join("") + "</div>";
+}
+
+function todoNav(dir) {
+  const today = dateStrOf(new Date());
+  const anchor = todoUI.anchor || today;
+  if (todoUI.view === "month") todoUI.anchor = shiftMonthStr(anchor, dir);
+  else todoUI.anchor = addDaysStr(anchor, dir * (todoUI.view === "week" ? 7 : 1));
+}
+
+function todoHTML() {
+  const now = new Date();
+  const today = dateStrOf(now);
+  const anchor = todoUI.anchor || today;
+  const v = todoUI.view;
+  const seg = '<div class="vseg">' + [["day", "日"], ["week", "周"], ["month", "月"]].map(x =>
+    '<button data-action="todo-view" data-view="' + x[0] + '" class="' + (v === x[0] ? "on" : "") + '">' + x[1] + "</button>").join("") + "</div>";
+  const body = v === "week" ? todoWeekHTML(anchor, now, today) : v === "month" ? todoMonthHTML(anchor, now, today) : todoDayHTML(anchor, now, today);
+  return '<div class="view-head"><div class="eyebrow">TO-DO · DDL 账本</div>'
+    + '<div class="head-actions">'
+    + (anchor !== today ? '<button class="btn-ghost" data-action="todo-today">回今天</button>' : "")
+    + '<button class="btn-mini" data-action="add-task">＋ 任务</button></div></div>'
+    + seg + body;
+}
+
+function todoDayHTML(anchor, now, today) {
+  const b = todoBuckets(liveTasks(), now);
+  const overdue = b.overdue.slice().sort(byUtDesc);
+  const isToday = anchor === today;
+  // 看过去的日期时，当天的未完成任务必然已逾期，只保留逾期桶，避免重复
+  const dayTasks = anchor >= today ? liveTasks().filter(t => t.deadline === anchor).sort(byUtDesc) : [];
+  const soon = isToday ? b.soon.slice().sort((x, y) => (deadlineInfo(x, now).daysLeft - deadlineInfo(y, now).daysLeft) || byUtDesc(x, y)) : [];
+  const p = anchor.split("-").map(Number);
+  let out = '<div class="cal-head"><div class="cal-title">' + (isToday ? "今天 · " : "") + p[1] + " 月 " + p[2] + " 日 · 周" + weekdayZh(anchor) + "</div>"
+    + '<div class="cal-nav">'
+    + '<button class="btn-mini" data-action="todo-nav" data-dir="-1">‹ 前一天</button>'
+    + '<button class="btn-mini" data-action="todo-nav" data-dir="1">后一天 ›</button></div></div>';
+  out += todoSection("已逾期 " + overdue.length, overdue, true);
+  out += todoSection((isToday ? "今天到期 " : fmtDateShort(anchor) + " 到期 ") + dayTasks.length, dayTasks, false);
+  if (isToday) out += todoSection("72h 内到期 " + soon.length, soon, false);
+  out += weekPaceStrip(anchor, today);
+  if (!overdue.length && !dayTasks.length && !soon.length) {
+    const near = b.future.slice().sort((x, y) => (x.deadline < y.deadline ? -1 : 1))[0];
+    out += '<div class="card"><div class="empty">' + (isToday ? "今天没有到期任务" : "这一天没有到期任务")
+      + (near ? "<br>最近的 DDL：" + fmtDateShort(near.deadline) + " · " + esc(near.name) : "") + "</div></div>";
+  }
+  const st = todoFooterStats(now);
+  out += '<div class="diag-note">✓ 今日已完成 ' + st.doneToday + " · 无日期任务 " + st.noDate + "（不进日历）</div>";
+  return out;
+}
+
+function weekPaceStrip(anchor, today) {
+  if (weekStartStr(anchor) !== weekStartStr(today)) return "";
+  const live = new Set(state.projects.filter(p => !p.archived).map(p => p.id));
+  const remW = state.tasks.filter(t => !t.completed && live.has(t.projectId))
+    .reduce((s, t) => s + (Number(t.plannedThisWeek) || 0), 0);
+  if (!(remW > 0)) return "";
+  const daysLeft = 7 - ((parseDateStr(today).getDay() + 6) % 7);
+  return '<div class="pace-strip">本周剩余 <b>' + fmtH(remW) + "h</b> ÷ 剩 " + daysLeft + " 天 ≈ <b>" + fmtH(remW / daysLeft) + "h/天</b></div>";
+}
+
+function todoWeekHTML(anchor, now, today) {
+  const tasks = liveTasks();
+  const monday = weekStartStr(anchor);
+  const isCurrent = weekStartStr(today) === monday;
+  const grouped = groupByDeadline(tasks, monday, addDaysStr(monday, 6));
+  const wall = wallInfo(tasks, now);
+  const overdue = todoBuckets(tasks, now).overdue.slice().sort(byUtDesc);
+  const weekDdl = Object.keys(grouped).reduce((s, k) => s + grouped[k].length, 0);
+  const chips = [];
+  if (overdue.length) chips.push('<span class="chip chip-hot">逾期 ' + overdue.length + "</span>");
+  chips.push('<span class="chip">本周 DDL ' + weekDdl + "</span>");
+  if (isCurrent) {
+    const pfv = computePortfolio(state.projects, state.tasks, state.settings.capacity);
+    chips.push('<span class="chip ' + (pfv.Lp >= 0.8 ? "chip-warm" : "") + '">本周负荷 ' + pct(pfv.Lp) + "</span>");
+  }
+  let strip = "";
+  for (let i = 0; i < 7; i++) {
+    const ds = addDaysStr(monday, i);
+    const c = (grouped[ds] || []).length;
+    const info = wall.days[ds];
+    let cntCls = "wk-cnt";
+    if (info && (info.overdue || info.hot)) cntCls += " hot";
+    else if (c >= 2) cntCls += " warm";
+    strip += '<button class="wk-day' + (ds === today ? " today" : "") + '" data-action="todo-day" data-date="' + ds + '">'
+      + '<span class="wd">' + WD_ZH[(i + 1) % 7] + '</span><span class="dn">' + Number(ds.slice(8, 10)) + '</span>'
+      + '<span class="' + cntCls + '">' + (c > 0 ? c : "·") + "</span></button>";
+  }
+  const wk = wall.weeks[monday];
+  let agenda = "";
+  if (isCurrent) agenda += todoSection("已逾期 " + overdue.length, overdue, true);
+  for (const ds of Object.keys(grouped).sort()) {
+    // 本周视图里逾期任务已单独置顶，逐日分组里不再重复
+    const items = (isCurrent ? grouped[ds].filter(t => !deadlineInfo(t, now).isOverdue) : grouped[ds]).slice().sort(byUtDesc);
+    if (!items.length) continue;
+    agenda += todoSection((ds === today ? "今天 · " : "") + "周" + weekdayZh(ds) + " " + fmtDateShort(ds) + " · " + items.length + " 个", items, false);
+  }
+  const st = todoFooterStats(now);
+  return '<div class="cal-head"><div class="cal-title">' + fmtDateShort(monday) + " – " + fmtDateShort(addDaysStr(monday, 6)) + (isCurrent ? " · 本周" : "") + "</div>"
+    + '<div class="cal-nav">'
+    + '<button class="btn-mini" data-action="todo-nav" data-dir="-1">‹ 前一周</button>'
+    + '<button class="btn-mini" data-action="todo-nav" data-dir="1">后一周 ›</button></div></div>'
+    + '<div class="chips">' + chips.join("") + "</div>"
+    + '<div class="wk-strip">' + strip + "</div>"
+    + (wk && wk.wall ? '<div class="wall-banner">⚠ DDL 墙 · ' + wk.reasons.join(" · ") + "</div>" : "")
+    + (agenda || '<div class="card"><div class="empty">这一周没有到期任务</div></div>')
+    + '<div class="diag-note">✓ 今日已完成 ' + st.doneToday + " · 无日期任务 " + st.noDate + "（不进日历）</div>";
+}
+
+function todoMonthHTML(anchor, now, today) {
+  const wall = wallInfo(liveTasks(), now);
+  const y = Number(anchor.slice(0, 4)), m = Number(anchor.slice(5, 7));
+  const first = dateStrOf(new Date(y, m - 1, 1));
+  const last = dateStrOf(new Date(y, m, 0));
+  const gridStart = weekStartStr(first);
+  let cells = "";
+  for (let i = 0; i < 42; i++) {
+    const ds = addDaysStr(gridStart, i);
+    const inMonth = ds.slice(5, 7) === anchor.slice(5, 7);
+    const info = wall.days[ds];
+    const c = info ? info.count : 0;
+    const wk = wall.weeks[weekStartStr(ds)];
+    const cls = ["cal-cell"];
+    if (!inMonth) cls.push("out");
+    else {
+      if (wk && wk.wall) cls.push("wallweek");
+      if (info && info.count >= 2) cls.push("daywall");
+    }
+    if (ds === today) cls.push("tday");
+    if (c > 0) cls.push("has");
+    const pipCls = info && (info.overdue || info.hot) ? "pip hot" : info && info.count >= 2 ? "pip warm" : "pip";
+    const pips = c > 0 ? '<span class="pips">' + (c > 3 ? '<span class="pip-n">' + c + "</span>"
+      : Array.from({ length: c }, () => '<span class="' + pipCls + '"></span>').join("")) + "</span>" : "";
+    cells += '<button class="' + cls.join(" ") + '"' + (c > 0 ? ' data-action="todo-day" data-date="' + ds + '"' : "") + ">"
+      + "<span>" + Number(ds.slice(8, 10)) + "</span>" + pips + "</button>";
+  }
+  const notes = Object.keys(wall.weeks).filter(ws => wall.weeks[ws].wall && ws <= last && addDaysStr(ws, 6) >= first).sort()
+    .map(ws => '<div class="wall-note">⚠ ' + fmtDateShort(ws) + " – " + fmtDateShort(addDaysStr(ws, 6)) + "：" + wall.weeks[ws].reasons.join("，") + "</div>")
+    .join("");
+  const st = todoFooterStats(now);
+  return '<div class="cal-head"><div class="cal-title">' + y + " 年 " + m + " 月</div>"
+    + '<div class="cal-nav">'
+    + '<button class="btn-mini" data-action="todo-nav" data-dir="-1">‹ 前一月</button>'
+    + '<button class="btn-mini" data-action="todo-nav" data-dir="1">后一月 ›</button></div></div>'
+    + '<div class="cal-grid">' + ["一", "二", "三", "四", "五", "六", "日"].map(w => '<div class="cal-wd">' + w + "</div>").join("") + cells + "</div>"
+    + notes
+    + lookaheadHTML(now, today)
+    + '<div class="diag-note">无日期任务 ' + st.noDate + "（不进日历）· 点有标记的日期看当天</div>";
+}
+
+function lookaheadHTML(now, today) {
+  const wall = wallInfo(liveTasks(), now);
+  const end = addDaysStr(today, 60);
+  const rows = [];
+  let total = 0, wallWeeks = 0;
+  for (let ws = weekStartStr(today); ws <= end; ws = addDaysStr(ws, 7)) {
+    const w = wall.weeks[ws];
+    if (!w) continue;
+    total += w.count;
+    if (w.wall) wallWeeks++;
+    rows.push('<div class="lk-row' + (w.wall ? " wall" : "") + '" data-action="todo-week" data-date="' + ws + '">'
+      + '<span class="lk-date">' + fmtDateShort(ws) + " – " + fmtDateShort(addDaysStr(ws, 6)) + "</span>"
+      + '<span class="lk-cnt">' + w.count + " 个 DDL</span>"
+      + (w.wall ? '<span class="tag tag-warm">墙</span>' : "") + "</div>");
+  }
+  const head = '<div class="eyebrow lg">FUTURE 60 DAYS · 远期摘要</div>';
+  if (!rows.length) return head + '<div class="card"><div class="empty">未来 60 天没有已排期的 DDL</div></div>';
+  return head + '<div class="card list">' + rows.slice(0, 9).join("")
+    + (rows.length > 9 ? '<div class="empty">… 其余 ' + (rows.length - 9) + " 周</div>" : "")
+    + '<div class="lk-total">共 ' + total + " 个 DDL · " + wallWeeks + " 周触发墙预警 · 点周可跳转</div></div>";
+}
+
 // ---------- Modals ----------
 function openModal(inner) {
   $("#modal-root").innerHTML = '<div class="backdrop" data-action="close-modal"></div><div class="sheet">' + inner + "</div>";
@@ -718,7 +1041,7 @@ function openTaskForm(taskId, presetProjectId) {
     let Wt = clampPlanned(Ht, WtIn);
     const clamped = WtIn > Wt + 1e-9;
     if (completed) Wt = 0;
-    if (t) Object.assign(t, { name, projectId, remainingEffort: Ht, plannedThisWeek: Wt, deadline, consequence, completed });
+    if (t) Object.assign(t, { name, projectId, remainingEffort: Ht, plannedThisWeek: Wt, deadline, consequence, completed, completedAt: completed ? (t.completedAt || new Date().toISOString()) : null });
     else state.tasks.push({ id: uid(), name, projectId, remainingEffort: Ht, plannedThisWeek: Wt, deadline, consequence, completed, createdAt: new Date().toISOString() });
     save(); closeModal(); render();
     if (clamped) toast("本周计划已随剩余工作量下调至 " + fmtH(Wt) + "h");
@@ -767,6 +1090,7 @@ function toggleTask(id) {
   const t = state.tasks.find(x => x.id === id);
   if (!t) return;
   t.completed = !t.completed;
+  t.completedAt = t.completed ? new Date().toISOString() : null; // 记录完成当天，供待办视图"今日已完成"统计
   let msg = "";
   if (t.completed) {
     if ((Number(t.plannedThisWeek) || 0) > 0) msg = "已完成 · 本周计划已清零";
@@ -842,6 +1166,11 @@ document.addEventListener("click", e => {
   else if (a === "add-task") openTaskForm(null, ui.tab === "project" ? ui.projectId : null);
   else if (a === "edit-task") openTaskForm(id);
   else if (a === "toggle-task") toggleTask(id);
+  else if (a === "todo-view") { todoUI.view = el.dataset.view; render(); }
+  else if (a === "todo-nav") { todoNav(Number(el.dataset.dir) || 0); render(); }
+  else if (a === "todo-today") { todoUI.anchor = null; render(); }
+  else if (a === "todo-day") { todoUI.view = "day"; todoUI.anchor = el.dataset.date; window.scrollTo(0, 0); render(); }
+  else if (a === "todo-week") { todoUI.view = "week"; todoUI.anchor = el.dataset.date; window.scrollTo(0, 0); render(); }
   else if (a === "del-task") {
     const t = state.tasks.find(x => x.id === id);
     if (t && confirm("删除任务「" + t.name + "」？")) {
