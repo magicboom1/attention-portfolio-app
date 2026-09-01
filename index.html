@@ -670,7 +670,7 @@ function projectsHTML() {
 
 function projectDetailHTML(projectId) {
   const project = state.projects.find(p => p.id === projectId);
-  if (!project) { ui.tab = "home"; return dashboardHTML(); }
+  if (!project) { ui = { tab: ui.from === "projects" ? "projects" : "home", projectId: null }; return ui.tab === "projects" ? projectsHTML() : dashboardHTML(); }
   const C = state.settings.capacity;
   const pf = computePortfolio(state.projects, state.tasks, C);
   const p = pf.projects.find(x => x.id === projectId)
@@ -1161,8 +1161,8 @@ document.addEventListener("click", e => {
   const a = el.dataset.action;
   const id = el.dataset.id;
   if (a === "tab") { ui = { tab: el.dataset.tab, projectId: null }; window.scrollTo(0, 0); render(); }
-  else if (a === "open-project") { ui = { tab: "project", projectId: id }; window.scrollTo(0, 0); render(); }
-  else if (a === "back") { ui = { tab: "home", projectId: null }; render(); }
+  else if (a === "open-project") { ui = { tab: "project", projectId: id, from: ui.tab === "projects" ? "projects" : "home" }; window.scrollTo(0, 0); render(); }
+  else if (a === "back") { ui = { tab: ui.from === "projects" ? "projects" : "home", projectId: null }; render(); }
   else if (a === "add-task") openTaskForm(null, ui.tab === "project" ? ui.projectId : null);
   else if (a === "edit-task") openTaskForm(id);
   else if (a === "toggle-task") toggleTask(id);
@@ -1184,7 +1184,7 @@ document.addEventListener("click", e => {
     const p = state.projects.find(x => x.id === id);
     if (p && confirm("归档项目「" + p.name + "」？归档后不参与本周计算，可随时恢复。")) {
       p.archived = true;
-      if (ui.projectId === id) ui = { tab: "home", projectId: null };
+      if (ui.projectId === id) ui = { tab: ui.from === "projects" ? "projects" : "home", projectId: null };
       save(); render();
     }
   }
@@ -1197,7 +1197,7 @@ document.addEventListener("click", e => {
     if (p && confirm("删除项目「" + p.name + "」及其全部任务？不可恢复。")) {
       state.projects = state.projects.filter(x => x.id !== id);
       state.tasks = state.tasks.filter(t => t.projectId !== id);
-      if (ui.projectId === id) ui = { tab: "home", projectId: null };
+      if (ui.projectId === id) ui = { tab: ui.from === "projects" ? "projects" : "home", projectId: null };
       save(); render();
     }
   }
