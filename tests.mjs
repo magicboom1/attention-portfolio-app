@@ -8,8 +8,8 @@ const html = readFileSync(new URL("./index.html", import.meta.url), "utf8");
 const m = html.match(/\/\/ ===== ENGINE START =====([\s\S]*?)\/\/ ===== ENGINE END =====/);
 if (!m) { console.error("FATAL: index.html 中未找到 ENGINE 标记"); process.exit(1); }
 
-const E = new Function(m[1] + "\nreturn { CONSEQUENCE_LEVELS, deadlineInfo, deadlinePressure, taskUrgency, computeProject, computePortfolio, weekIdOf, clampPlanned, applyWeekRollover };")();
-const { deadlinePressure, taskUrgency, computePortfolio, computeProject, weekIdOf, clampPlanned, applyWeekRollover } = E;
+const E = new Function(m[1] + "\nreturn { CONSEQUENCE_LEVELS, deadlineInfo, deadlinePressure, taskUrgency, computeProject, computePortfolio, weekIdOf, clampPlanned, applyWeekRollover, dateStrOf, addDaysStr, weekStartStr, shiftMonthStr, todoBuckets, groupByDeadline, wallInfo };")();
+const { deadlinePressure, taskUrgency, computePortfolio, computeProject, weekIdOf, clampPlanned, applyWeekRollover, dateStrOf, addDaysStr, weekStartStr, shiftMonthStr, todoBuckets, groupByDeadline, wallInfo } = E;
 
 let pass = 0, fail = 0;
 function check(name, cond, detail) {
@@ -249,6 +249,84 @@ console.log("\n[Extra] 决策树与边界");
   check("已完成任务不计入", pf([P()], [T({ remainingEffort: 5, plannedThisWeek: 5, completed: true })], 24).Lp === 0);
   const pDormant = computeProject(P(), [T({ plannedThisWeek: 0 })], 24);
   check("computeProject DORMANT", pDormant.state === "DORMANT" && pDormant.weightedU === null);
+}
+
+console.log("\n[Units] To-do 视图 · 日期工具");
+check("dateStrOf 本地时区", dateStrOf(new Date(2026, 8, 1)) === "2026-09-01");
+check("addDaysStr 跨月", addDaysStr("2026-08-31", 1) === "2026-09-01");
+check("addDaysStr 负数跨月", addDaysStr("2026-09-01", -1) === "2026-08-31");
+check("addDaysStr 跨年", addDaysStr("2026-01-01", -1) === "2025-12-31");
+check("addDaysStr 闰年", addDaysStr("2028-02-28", 1) === "2028-02-29");
+check("weekStartStr 周二取周一", weekStartStr("2026-09-01") === "2026-08-31");
+check("weekStartStr 周日归本周", weekStartStr("2026-09-06") === "2026-08-31");
+check("weekStartStr 周一不动", weekStartStr("2026-08-31") === "2026-08-31");
+check("weekStartStr 与 weekIdOf 同口径", weekStartStr(dateStrOf(new Date(2026, 8, 2))) === weekIdOf(new Date(2026, 8, 2)));
+check("shiftMonthStr 进位", shiftMonthStr("2026-08-14", 1) === "2026-09-01");
+check("shiftMonthStr 跨年", shiftMonthStr("2026-01-15", -1) === "2025-12-01");
+check("shiftMonthStr 12 月", shiftMonthStr("2026-12-15", 1) === "2027-01-01");
+
+console.log("\n[Units] To-do 视图 · 分桶与分组");
+const NOW = new Date(2026, 8, 1, 12, 0, 0); // 2026-09-01 周二正午：固定基准，避免用例随时段漂移
+{
+  const b = todoBuckets([
+    T({ deadline: "2026-08-30" }), T({ deadline: "2026-09-01" }),
+    T({ deadline: "2026-09-02" }), T({ deadline: "2026-09-03" }),
+    T({ deadline: "2026-09-04" }), T({ deadline: "2026-09-10" }),
+    T({ deadline: "2026-09-01", completed: true }), T({ deadline: null }),
+  ], NOW);
+  check("逾期 1", b.overdue.length === 1);
+  check("今天 1（排除已完成）", b.today.length === 1);
+  check("72h 内 2（+1/+2 天）", b.soon.length === 2);
+  check("更远 2", b.future.length === 2);
+  check("四桶互斥覆盖全部未完成有 DDL 任务", b.overdue.length + b.today.length + b.soon.length + b.future.length === 6);
+}
+{
+  const g = groupByDeadline([
+    T({ deadline: "2026-09-01" }), T({ deadline: "2026-09-03" }), T({ deadline: "2026-09-03" }),
+    T({ deadline: "2026-08-30" }), T({ deadline: null }), T({ deadline: "2026-09-03", completed: true }),
+  ], "2026-09-01", "2026-09-06");
+  check("闭区间含首日", (g["2026-09-01"] || []).length === 1);
+  check("同日聚合", (g["2026-09-03"] || []).length === 2);
+  check("排除区间外日期", g["2026-08-30"] === undefined);
+  check("排除无 DDL 与已完成", Object.keys(g).length === 2);
+}
+
+console.log("\n[Units] To-do 视图 · DDL 墙判定（单周≥3 / 单日≥2 / 72h 内）");
+{
+  const w = wallInfo([T({ deadline: "2026-09-14" }), T({ deadline: "2026-09-15" }), T({ deadline: "2026-09-16" })], NOW);
+  check("单周 3 个 -> 墙", w.weeks["2026-09-14"].wall === true);
+  check("原因含单周口径", w.weeks["2026-09-14"].reasons[0] === "单周 3 个 DDL");
+  check("dayMax = 1", w.weeks["2026-09-14"].dayMax === 1);
+}
+{
+  const w = wallInfo([T({ deadline: "2026-09-14" }), T({ deadline: "2026-09-14" })], NOW);
+  check("单日 2 个 -> 墙", w.weeks["2026-09-14"].wall === true);
+  check("原因含单日口径", w.weeks["2026-09-14"].reasons[0] === "单日最多 2 个");
+  check("dayMax = 2", w.weeks["2026-09-14"].dayMax === 2);
+}
+{
+  const w = wallInfo([T({ deadline: "2026-09-02" })], NOW);
+  check("72h 内单个 DDL -> 墙", w.weeks["2026-08-31"].wall === true);
+  check("day.hot 标记", w.days["2026-09-02"].hot === true);
+}
+{
+  const w = wallInfo([T({ deadline: "2026-09-16" })], NOW);
+  check("远处单个 DDL -> 非墙", w.weeks["2026-09-14"].wall === false);
+  check("非墙无原因文案", w.weeks["2026-09-14"].reasons.length === 0);
+}
+{
+  const w = wallInfo([T({ deadline: "2026-08-30" })], NOW);
+  check("单个逾期不触发墙（72h 口径不含逾期）", w.weeks["2026-08-24"].wall === false);
+  check("逾期日标记 overdue", w.days["2026-08-30"].overdue === true);
+}
+{
+  const w = wallInfo([T({ deadline: "2026-09-02" }), T({ deadline: "2026-09-15" }), T({ deadline: "2026-09-17" })], NOW);
+  check("本周因 72h 成墙", w.weeks["2026-08-31"].wall === true);
+  check("下周 2 个分散 DDL 不成墙", w.weeks["2026-09-14"].wall === false);
+}
+{
+  const w = wallInfo([T({ deadline: "2026-09-01", completed: true }), T({ deadline: null })], NOW);
+  check("已完成/无 DDL 不参与墙判定", Object.keys(w.weeks).length === 0 && Object.keys(w.days).length === 0);
 }
 
 console.log("\n===== " + pass + " passed, " + fail + " failed =====");
